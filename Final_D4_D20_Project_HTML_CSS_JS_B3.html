@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>D20 and D6 Diceroller</title>
+  <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap" rel="stylesheet">
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-image: url('https://i.imgur.com/WMDgYZO.png');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      background-repeat: no-repeat;
+    }
+    .container {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-direction: column;
+    }
+    .special-message {
+      background: linear-gradient(to bottom, #ffd700, #ffeb3b);
+      padding: 10px 20px;
+      border: 3px solid #8b4513;
+      border-radius: 10px;
+      font-family: 'MedievalSharp', cursive;
+      font-size: 20px;
+      color: #8b4513;
+      text-align: center;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+      display: none;
+      opacity: 0;
+      transition: opacity 15s ease;
+      animation: pulse 1s infinite;
+    }
+    .special-message.show {
+      display: block;
+      opacity: 1;
+    }
+    .diceroller {
+      background: linear-gradient(to bottom, #ffffff, #ed8847);
+      padding: 40px;
+      border: 4px solid #8b4513;
+      border-radius: 15px;
+      text-align: center;
+      font-family: 'MedievalSharp', cursive;
+      width: 400px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    }
+    .dice-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .dice-button {
+      background-color: #8b4513;
+      color: white;
+      padding: 15px 30px;
+      border: none;
+      border-radius: 8px;
+      font-size: 24px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .dice-button:hover {
+      background-color: #a0522d;
+    }
+    #result {
+      font-size: 36px;
+      margin-top: 30px;
+      transition: opacity 0.3s ease;
+    }
+    #diceImage {
+      width: 120px;
+      height: 120px;
+      margin-top: 20px;
+    }
+    .spin {
+      transform: rotate(360deg);
+      transition: transform 0.5s ease;
+    }
+    .bounce {
+      animation: bounce 0.8s ease;
+    }
+    .critical-fail {
+      color: #ff0000;
+      text-shadow: 3px 3px 6px #000;
+      animation: shake 0.5s;
+    }
+    .critical-success {
+      color: #ffd700;
+      text-shadow: 3px 3px 6px #000;
+      animation: pulse 0.5s;
+    }
+    .roll-tracker {
+      background: linear-gradient(to bottom, #d9c8a3, #c8b289);
+      padding: 20px;
+      border: 3px solid #8b4513;
+      border-radius: 10px;
+      font-family: 'MedievalSharp', cursive;
+      width: 150px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    }
+    .roll-tracker h3 {
+      margin: 0 0 10px 0;
+      font-size: 20px;
+      color: #8b4513;
+    }
+    .roll-tracker ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .roll-tracker li {
+      font-size: 18px;
+      color: #333;
+      margin-bottom: 5px;
+    }
+    @keyframes shake {
+      0% { transform: translate(0, 0); }
+      10% { transform: translate(-15px, 0); }
+      20% { transform: translate(15px, 0); }
+      30% { transform: translate(-15px, 0); }
+      40% { transform: translate(15px, 0); }
+      50% { transform: translate(-15px, 0); }
+      60% { transform: translate(15px, 0); }
+      70% { transform: translate(-15px, 0); }
+      80% { transform: translate(15px, 0); }
+      90% { transform: translate(-15px, 0); }
+      100% { transform: translate(0, 0); }
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    @keyframes bounce {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-30px); }
+      100% { transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="special-message" id="specialMessage">
+      Three 20s? The gods are laughing in your favor!
+    </div>
+    <div style="display: flex; gap: 20px;">
+      <div class="diceroller">
+        <div class="dice-buttons">
+          <button class="dice-button" id="rollD20">Roll D20</button>
+          <button class="dice-button" id="rollD6">Roll D6</button>
+        </div>
+        <h2 id="result" aria-live="polite">May the odds be ever in your favor.</h2>
+        <img id="diceImage" src="https://i.imgur.com/LTctQW3.png" alt="Dice">
+      </div>
+      <div class="roll-tracker">
+        <h3>Recent Rolls</h3>
+        <ul id="rollHistory">
+          <li>-</li>
+          <li>-</li>
+          <li>-</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <script>
+    const rollD20Button = document.getElementById('rollD20');
+    const rollD6Button = document.getElementById('rollD6');
+    const result = document.getElementById('result');
+    const diceImage = document.getElementById('diceImage');
+    const rollHistory = document.getElementById('rollHistory');
+    const specialMessage = document.getElementById('specialMessage');
+    let rolls = [];
+    let currentDice = 'D20';
+
+    function rollDice(sides) {
+      const roll = Math.floor(Math.random() * sides) + 1;
+      result.textContent = `You rolled a ${roll} on a ${currentDice}.`;
+
+      result.classList.remove('critical-fail', 'critical-success');
+      diceImage.classList.remove('spin');
+
+      if (sides === 20) {
+        if (roll === 1) {
+          result.classList.add('critical-fail');
+          result.textContent += ' Critical Fail!';
+        } else if (roll === 20) {
+          result.classList.add('critical-success');
+          result.textContent += ' Critical Success!';
+        }
+      }
+
+      result.style.opacity = '1';
+
+      rolls.unshift({ value: roll, dice: currentDice });
+      if (rolls.length > 3) rolls.pop();
+      updateRollHistory();
+
+      if (currentDice === 'D20') {
+        const d20Rolls = rolls.filter(r => r.dice === 'D20').map(r => r.value);
+        if (d20Rolls.length >= 3 && d20Rolls[0] === 20 && d20Rolls[1] === 20 && d20Rolls[2] === 20) {
+          specialMessage.textContent = "Three 20s? The gods are laughing in your favor!";
+          specialMessage.classList.add('show');
+          setTimeout(() => specialMessage.classList.remove('show'), 5000);
+        } else if (d20Rolls.length >= 3 && d20Rolls[0] === 6 && d20Rolls[1] === 6 && d20Rolls[2] === 6) {
+          specialMessage.textContent = "Three 6s? The dice summon an imp. Run!";
+          specialMessage.classList.add('show');
+          setTimeout(() => specialMessage.classList.remove('show'), 5000);
+        } else if (d20Rolls.length >= 3 && d20Rolls[0] === 7 && d20Rolls[1] === 7 && d20Rolls[2] === 7) {
+          specialMessage.textContent = "Three 7s? Plus three to your next roll! What? I'm not adding it for you.";
+          specialMessage.classList.add('show');
+          setTimeout(() => specialMessage.classList.remove('show'), 5000);
+        } else if (d20Rolls.length >= 2 && d20Rolls[0] === 1 && d20Rolls[1] === 1) {
+          specialMessage.textContent = "Double 1s? The snake stares back at you from the abyss.";
+          specialMessage.classList.add('show');
+          setTimeout(() => specialMessage.classList.remove('show'), 5000);
+        } else {
+          specialMessage.classList.remove('show');
+        }
+      }
+
+      void diceImage.offsetWidth;
+      diceImage.classList.add('bounce');
+    }
+
+    rollD20Button.addEventListener('click', () => {
+      currentDice = 'D20';
+      diceImage.src = 'https://i.imgur.com/LTctQW3.png'; 
+      result.style.opacity = '0';
+      diceImage.classList.remove('bounce');
+      diceImage.classList.add('spin');
+      setTimeout(() => rollDice(20), 500);
+    });
+
+    rollD6Button.addEventListener('click', () => {
+      currentDice = 'D6';
+      diceImage.src = 'https://i.imgur.com/r7jBEDS.png';
+      result.style.opacity = '0';
+      diceImage.classList.remove('bounce');
+      diceImage.classList.add('spin');
+      setTimeout(() => rollDice(6), 500);
+    });
+
+    function updateRollHistory() {
+      const historyItems = rollHistory.getElementsByTagName('li');
+      for (let i = 0; i < 3; i++) {
+        if (rolls[i]) {
+          historyItems[i].textContent = `${rolls[i].value} (${rolls[i].dice})`;
+        } else {
+          historyItems[i].textContent = '-';
+        }
+      }
+    }
+  </script>
+</body>
+</html>
